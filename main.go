@@ -10,17 +10,12 @@ import (
 
 	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
+	"github.com/rs/cors"
 )
 
 var ctx = context.Background()
 var redisClient *redis.Client
 
-//	type User struct {
-//		DefuseCount int    `json:"defuseCount"`
-//		HighScore   int    `json:"highScore"`
-//		ID          string `json:"id"`
-//		Username    string `json:"username"`
-//	}
 func main() {
 	// Parse Redis URL
 	redisURL := os.Getenv("REDIS_URL")
@@ -49,9 +44,20 @@ func main() {
 	http.HandleFunc("/api/updateUser", updateUserHandler)
 	http.HandleFunc("/api/getUserIDByUsername", getUserIDByUsernameHandler)
 
+	// Set up CORS
+	c := cors.New(cors.Options{
+		AllowedOrigins:   []string{"*"}, // Allow all origins
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},
+		AllowedHeaders:   []string{"*"},
+		AllowCredentials: true,
+	})
+
+	// Wrap the default HTTP handler with the CORS middleware
+	handler := c.Handler(http.DefaultServeMux)
+
 	// Start HTTP server
 	log.Println("Server is running on port 8080...")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServe(":8080", handler))
 }
 
 type User struct {
